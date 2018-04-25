@@ -27,7 +27,7 @@ fun main(args: Array<String>) {
     socket.use { s ->
         val output = s.outputStream
         val input = s.inputStream.bufferedReader()
-        var state = State()
+        var state: State = State.Forward()
         while (true) {
             val sector = readMap(input)
             if (sector == null) {
@@ -48,13 +48,7 @@ fun move(view: List<String>, s: State): Pair<Char, State> {
         println("I CAN SEE THE EXIT!")
         return Pair(moveTo(exit), s)
     }
-    return if (s.steps == 0) {
-        val command = if (s.forwardMode) '<' else '>'
-        val newMode = !s.forwardMode
-        Pair(command, s.copy(forwardMode = newMode, steps = if (newMode) FORWARD_STEPS else ORTHOGONAL_STEPS))
-    } else {
-        Pair('^', s.copy(steps = s.steps - 1))
-    }
+    return s.move()
 }
 
 fun moveTo(vec: Vec): Char {
@@ -66,10 +60,21 @@ fun moveTo(vec: Vec): Char {
     }
 }
 
-const val FORWARD_STEPS = 17
-const val ORTHOGONAL_STEPS = 5
+sealed class State {
+    data class Forward(val steps: Int = 17) : State() {
+        override fun move(): Pair<Char, State> =
+                if (steps == 0) Pair('<', Orthogonal())
+                else Pair('^', copy(steps = steps - 1))
+    }
 
-data class State(val forwardMode: Boolean = true, val steps: Int = FORWARD_STEPS)
+    data class Orthogonal(val steps: Int = 5) : State() {
+        override fun move(): Pair<Char, State> =
+                if (steps == 0) Pair('>', Forward())
+                else Pair('^', copy(steps = steps - 1))
+    }
+
+    abstract fun move(): Pair<Char, State>
+}
 
 data class Dim(val width: Int, val height: Int)
 data class Vec(val x: Int, val y: Int)
