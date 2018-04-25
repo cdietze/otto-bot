@@ -43,10 +43,10 @@ fun main(args: Array<String>) {
 }
 
 fun move(view: List<String>, s: State): Pair<Char, State> {
-//    println("Map: \n${view.joinToString("\n")}")
-    if (view.any { it.any { x -> x == 'O' } }) {
+    val exit = findObject(view, 'O')
+    if (exit != null) {
         println("I CAN SEE THE EXIT!")
-//        throw RuntimeException("I CAN SEE THE EXIT!")
+        return Pair(moveTo(exit), s)
     }
     return if (s.steps == 0) {
         val command = if (s.forwardMode) '<' else '>'
@@ -57,7 +57,33 @@ fun move(view: List<String>, s: State): Pair<Char, State> {
     }
 }
 
+fun moveTo(vec: Vec): Char {
+    return when {
+        vec.y < 0 -> '^'
+        vec.y > 0 -> 'v'
+        vec.x < 0 -> '<'
+        else -> '>'
+    }
+}
+
 const val FORWARD_STEPS = 17
 const val ORTHOGONAL_STEPS = 5
 
 data class State(val forwardMode: Boolean = true, val steps: Int = FORWARD_STEPS)
+
+data class Dim(val width: Int, val height: Int)
+data class Vec(val x: Int, val y: Int)
+
+fun List<String>.dim(): Dim = Dim(this[0].length, this.size)
+
+fun vecFromPlayer(dim: Dim, index: Int): Vec {
+    require(dim.width % 2 == 1)
+    require(dim.height % 2 == 1)
+    return Vec(index % dim.width - dim.width / 2, index / dim.width - dim.height / 2)
+}
+
+fun findObject(view: List<String>, o: Char): Vec? {
+    val i = view.joinToString("").indexOf(o)
+    return if (i >= 0) vecFromPlayer(view.dim(), i)
+    else null
+}
