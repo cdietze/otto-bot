@@ -1,9 +1,7 @@
 import java.io.BufferedReader
 import java.net.Socket
 
-typealias Sector = List<String>
-
-private fun readMap(input: BufferedReader): Sector? {
+private fun readMap(input: BufferedReader): List<String>? {
     val result = mutableListOf<String>()
     var lines = 0
     while (true) {
@@ -29,17 +27,37 @@ fun main(args: Array<String>) {
     socket.use { s ->
         val output = s.outputStream
         val input = s.inputStream.bufferedReader()
+        var state = State()
         while (true) {
             val sector = readMap(input)
             if (sector == null) {
                 println("Game ended.")
                 break
             } else {
-                val command = move(sector)
-                output.write(command.toInt())
+                val response = move(sector, state)
+                state = response.second
+                output.write(response.first.toInt())
             }
         }
     }
 }
 
-fun move(sector: List<String>): Char = 'v'
+fun move(view: List<String>, s: State): Pair<Char, State> {
+//    println("Map: \n${view.joinToString("\n")}")
+    if (view.any { it.any { x -> x == 'O' } }) {
+        println("I CAN SEE THE EXIT!")
+//        throw RuntimeException("I CAN SEE THE EXIT!")
+    }
+    return if (s.steps == 0) {
+        val command = if (s.forwardMode) '<' else '>'
+        val newMode = !s.forwardMode
+        Pair(command, s.copy(forwardMode = newMode, steps = if (newMode) FORWARD_STEPS else ORTHOGONAL_STEPS))
+    } else {
+        Pair('^', s.copy(steps = s.steps - 1))
+    }
+}
+
+const val FORWARD_STEPS = 17
+const val ORTHOGONAL_STEPS = 5
+
+data class State(val forwardMode: Boolean = true, val steps: Int = FORWARD_STEPS)
