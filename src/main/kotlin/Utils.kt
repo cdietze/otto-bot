@@ -24,3 +24,8 @@ fun findObject(view: BotMap, o: Char): Vec? {
     return if (i >= 0) vecFromPlayer(view.dim(), i)
     else null
 }
+
+fun BotMap.playerSymbol(): Char {
+    val dim = dim()
+    return this.get(dim.height / 2)[dim.width / 2]
+}

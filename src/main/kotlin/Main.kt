@@ -21,6 +21,9 @@ fun runBot(moveFun: MoveFun) {
                 println("Turn $turn, Game ended.")
                 break
             } else {
+                if (turn == 1) {
+                    println("I am ${map.playerSymbol()}")
+                }
                 output.write(moveFun.invoke(map, turn).char.toInt())
             }
         }
