@@ -1,3 +1,5 @@
+import Command.*
+
 /** Solution for the escape mission */
 
 // we know the map is 32x32 and the view is 5x5,
@@ -19,7 +21,7 @@ object Mission1 {
     }
 }
 
-fun move(turn: Int, view: List<String>, s: State): Pair<Char, State> {
+fun move(turn: Int, view: List<String>, s: State): Pair<Command, State> {
     val exit = findObject(view, 'O')
     if (exit != null) {
         println("Turn $turn, I can see the exit!")
@@ -31,17 +33,17 @@ fun move(turn: Int, view: List<String>, s: State): Pair<Char, State> {
 sealed class State {
     data class Forward(
             val steps: Int = FORWARD_COUNT) : State() {
-        override fun move(): Pair<Char, State> =
-                if (steps == 0) Pair('<', Orthogonal())
-                else Pair('^', copy(steps = steps - 1))
+        override fun move(): Pair<Command, State> =
+                if (steps == 0) Pair(LEFT, Orthogonal())
+                else Pair(FORWARD, copy(steps = steps - 1))
     }
 
     data class Orthogonal(
             val steps: Int = SIDESTEP_COUNT) : State() {
-        override fun move(): Pair<Char, State> =
-                if (steps == 0) Pair('>', Forward())
-                else Pair('^', copy(steps = steps - 1))
+        override fun move(): Pair<Command, State> =
+                if (steps == 0) Pair(RIGHT, Forward())
+                else Pair(FORWARD, copy(steps = steps - 1))
     }
 
-    abstract fun move(): Pair<Char, State>
+    abstract fun move(): Pair<Command, State>
 }

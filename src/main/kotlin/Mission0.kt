@@ -6,7 +6,7 @@ object Mission0 {
             val dim = map.dim()
             val c = map.get(dim.height / 2)[dim.width / 2]
             println("I am $c")
-            '^'
+            Command.FORWARD
         }
         runBot(moveFun)
     }

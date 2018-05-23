@@ -1,3 +1,4 @@
+import Command.*
 import java.io.BufferedReader
 import java.net.Socket
 
@@ -18,7 +19,7 @@ private fun readMap(input: BufferedReader): List<String>? {
     return result
 }
 
-typealias MoveFun = (List<String>, Int) -> Char
+typealias MoveFun = (List<String>, Int) -> Command
 
 fun runBot(moveFun: MoveFun) {
     println("Hi from otto-bot")
@@ -37,19 +38,36 @@ fun runBot(moveFun: MoveFun) {
                 println("Turn $turn, Game ended.")
                 break
             } else {
-                output.write(moveFun.invoke(map, turn).toInt())
+                output.write(moveFun.invoke(map, turn).char.toInt())
             }
         }
     }
 }
 
-fun moveTowards(vec: Vec): Char {
+fun moveTowards(vec: Vec): Command {
     return when {
-        vec.y < 0 -> '^'
-        vec.y > 0 -> 'v'
-        vec.x < 0 -> '<'
-        else -> '>'
+        vec.y < 0 -> FORWARD
+        vec.y > 0 -> BACKWARD
+        vec.x < 0 -> LEFT
+        else -> RIGHT
     }
+}
+
+enum class Command {
+    FORWARD {
+        override val char: Char = '^'
+    },
+    LEFT {
+        override val char: Char = '<'
+    },
+    RIGHT {
+        override val char: Char = '>'
+    },
+    BACKWARD {
+        override val char: Char = 'v'
+    };
+
+    abstract val char: Char
 }
 
 data class Dim(val width: Int, val height: Int)
