@@ -18,40 +18,32 @@ private fun readMap(input: BufferedReader): List<String>? {
     return result
 }
 
-fun main(args: Array<String>) {
-    println("Hi, this is otto-bot")
-    val socket = Socket(
-            if (args.size > 0) args[0] else "localhost",
-            if (args.size > 1) Integer.parseInt(args[1]) else 63187
-    )
+typealias MoveFun = (List<String>, Int) -> Char
+
+fun runBot(moveFun: MoveFun) {
+    println("Hi from otto-bot")
+    val host = System.getenv("HOST") ?: "localhost"
+    val port = System.getenv("PORT")?.let(Integer::parseInt) ?: 63187
+    println("Connecting to $host:$port")
+    val socket = Socket(host, port)
     socket.use { s ->
         val output = s.outputStream
         val input = s.inputStream.bufferedReader()
-        var state: State = State.Forward()
+        var turn = 0
         while (true) {
-            val sector = readMap(input)
-            if (sector == null) {
-                println("Game ended.")
+            val map = readMap(input)
+            turn += 1
+            if (map == null) {
+                println("Turn $turn, Game ended.")
                 break
             } else {
-                val response = move(sector, state)
-                state = response.second
-                output.write(response.first.toInt())
+                output.write(moveFun.invoke(map, turn).toInt())
             }
         }
     }
 }
 
-fun move(view: List<String>, s: State): Pair<Char, State> {
-    val exit = findObject(view, 'O')
-    if (exit != null) {
-        println("I CAN SEE THE EXIT!")
-        return Pair(moveTo(exit), s)
-    }
-    return s.move()
-}
-
-fun moveTo(vec: Vec): Char {
+fun moveTowards(vec: Vec): Char {
     return when {
         vec.y < 0 -> '^'
         vec.y > 0 -> 'v'
@@ -60,23 +52,8 @@ fun moveTo(vec: Vec): Char {
     }
 }
 
-sealed class State {
-    data class Forward(val steps: Int = 17) : State() {
-        override fun move(): Pair<Char, State> =
-                if (steps == 0) Pair('<', Orthogonal())
-                else Pair('^', copy(steps = steps - 1))
-    }
-
-    data class Orthogonal(val steps: Int = 5) : State() {
-        override fun move(): Pair<Char, State> =
-                if (steps == 0) Pair('>', Forward())
-                else Pair('^', copy(steps = steps - 1))
-    }
-
-    abstract fun move(): Pair<Char, State>
-}
-
 data class Dim(val width: Int, val height: Int)
+
 data class Vec(val x: Int, val y: Int)
 
 fun List<String>.dim(): Dim = Dim(this[0].length, this.size)
