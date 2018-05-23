@@ -2,24 +2,8 @@ import Command.*
 import java.io.BufferedReader
 import java.net.Socket
 
-private fun readMap(input: BufferedReader): List<String>? {
-    val result = mutableListOf<String>()
-    var lines = 0
-    while (true) {
-        val line = input.readLine() ?: break
-        if (lines < 1) {
-            lines = line.length
-        }
-        result.add(line)
-        if (--lines < 1) {
-            break
-        }
-    }
-    if (result.isEmpty()) return null
-    return result
-}
-
-typealias MoveFun = (List<String>, Int) -> Command
+typealias BotMap = List<String>
+typealias MoveFun = (BotMap, Int) -> Command
 
 fun runBot(moveFun: MoveFun) {
     println("Hi from otto-bot")
@@ -42,6 +26,23 @@ fun runBot(moveFun: MoveFun) {
             }
         }
     }
+}
+
+private fun readMap(input: BufferedReader): BotMap? {
+    val result = mutableListOf<String>()
+    var lines = 0
+    while (true) {
+        val line = input.readLine() ?: break
+        if (lines < 1) {
+            lines = line.length
+        }
+        result.add(line)
+        if (--lines < 1) {
+            break
+        }
+    }
+    if (result.isEmpty()) return null
+    return result
 }
 
 fun moveTowards(vec: Vec): Command {
@@ -74,7 +75,7 @@ data class Dim(val width: Int, val height: Int)
 
 data class Vec(val x: Int, val y: Int)
 
-fun List<String>.dim(): Dim = Dim(this[0].length, this.size)
+fun BotMap.dim(): Dim = Dim(this[0].length, this.size)
 
 fun vecFromPlayer(dim: Dim, index: Int): Vec {
     require(dim.width % 2 == 1)
@@ -82,7 +83,7 @@ fun vecFromPlayer(dim: Dim, index: Int): Vec {
     return Vec(index % dim.width - dim.width / 2, index / dim.width - dim.height / 2)
 }
 
-fun findObject(view: List<String>, o: Char): Vec? {
+fun findObject(view: BotMap, o: Char): Vec? {
     val i = view.joinToString("").indexOf(o)
     return if (i >= 0) vecFromPlayer(view.dim(), i)
     else null
