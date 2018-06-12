@@ -27,7 +27,7 @@ fun main(args: Array<String>) {
 }
 
 fun move(turn: Int, view: BotMap, s: State): Pair<Command, State> {
-    Thread.sleep(50)
+    //    Thread.sleep(50)
     val gem = findObject(view, '@')
     if (gem != null) {
         println("Turn $turn, I can see a gem!")
