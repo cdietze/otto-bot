@@ -32,6 +32,6 @@ compileTestKotlin {
 task execute(type: JavaExec) {
     def mission = findProperty('mission')
     println "Running mission${mission}"
-    main = "Mission${mission}"
+    main = "mission${mission}.Mission${mission}Kt"
     classpath = sourceSets.main.runtimeClasspath
 }
