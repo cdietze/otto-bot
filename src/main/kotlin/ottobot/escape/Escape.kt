@@ -1,12 +1,7 @@
-package escape
+package ottobot.escape
 
-import BotMap
-import Command
-import Command.*
-import MoveFun
-import findObject
-import moveTowards
-import runBot
+import ottobot.*
+import ottobot.Command.*
 
 /** Solution for the escape mission */
 

@@ -1,12 +1,7 @@
-package collect
+package ottobot.collect
 
-import BotMap
-import Command
-import Command.*
-import MoveFun
-import findObject
-import moveTowards
-import runBot
+import ottobot.*
+import ottobot.Command.*
 
 /** Solution for the collect mode */
 
@@ -52,7 +47,7 @@ sealed class State {
     }
 
     /**
-     * @param rotation number of right turns. negative number means number of left turns
+     * @param rotation number of ottobot.right turns. negative number means number of ottobot.left turns
      */
     data class Fetch(
             val oldState: State,

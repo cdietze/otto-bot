@@ -1,8 +1,8 @@
-package avoid
+package ottobot.avoid
 
-import Command.FORWARD
-import MoveFun
-import runBot
+import ottobot.Command.FORWARD
+import ottobot.MoveFun
+import ottobot.runBot
 
 fun main(args: Array<String>) {
     println("Running mode 'avoid'")

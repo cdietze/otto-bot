@@ -1,3 +1,5 @@
+package ottobot
+
 data class Dim(val width: Int, val height: Int)
 
 data class Vec(val x: Int, val y: Int)

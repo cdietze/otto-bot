@@ -1,3 +1,5 @@
+package ottobot
+
 import java.io.BufferedReader
 import java.net.Socket
 

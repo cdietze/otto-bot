@@ -1,9 +1,9 @@
-package hello
+package ottobot.hello
 
-import Command
-import MoveFun
-import dim
-import runBot
+import ottobot.Command
+import ottobot.MoveFun
+import ottobot.dim
+import ottobot.runBot
 
 fun main(args: Array<String>) {
     println("Running mode 'hello'")

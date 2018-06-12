@@ -1,16 +1,7 @@
-package word
+package ottobot.word
 
-import BotMap
-import Command
-import Command.*
-import Dir
-import MoveFun
-import Vec
-import left
-import minus
-import plus
-import runBot
-import toVec
+import ottobot.*
+import ottobot.Command.*
 
 /** Solution for the word mission */
 
@@ -61,8 +52,4 @@ sealed class State {
     abstract fun move(ctx: StateContext): Pair<Command, State>
 }
 
-
-/**
- * @param rotation number of right turns. negative number means number of left turns
- */
 data class StateContext(val view: BotMap = listOf(), val dir: Dir = Dir.NORTH, val vec: Vec = Vec(0, 0))

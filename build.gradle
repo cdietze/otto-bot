@@ -32,6 +32,6 @@ compileTestKotlin {
 task execute(type: JavaExec) {
     def mode = findProperty('mode')
     println "Running mode ${mode}"
-    main = "${mode.toLowerCase()}.${mode}Kt"
+    main = "ottobot.${mode.toLowerCase()}.${mode}Kt"
     classpath = sourceSets.main.runtimeClasspath
 }
