@@ -5,7 +5,7 @@ typealias BotMap = List<String>
 typealias MoveFun = (BotMap, Int) -> Command
 
 fun runBot(moveFun: MoveFun) {
-    println("Hi from otto-bot")
+    println("This is otto-bot")
     val host = System.getenv("HOST") ?: "localhost"
     val port = System.getenv("PORT")?.let(Integer::parseInt) ?: 63187
     println("Connecting to $host:$port")

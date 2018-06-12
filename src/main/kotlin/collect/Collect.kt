@@ -1,4 +1,4 @@
-package mission2
+package collect
 
 import BotMap
 import Command
@@ -8,15 +8,15 @@ import findObject
 import moveTowards
 import runBot
 
-/** Solution for the collect mission */
+/** Solution for the collect mode */
 
 // we know the map is 32x32 and the view is 5x5,
-// so we move forward 32-5 steps and then move 5 orthogonally
+// so we escape.move forward 32-5 steps and then escape.move 5 orthogonally
 const val FORWARD_COUNT = 32 - 5
 const val SIDESTEP_COUNT = 5
 
 fun main(args: Array<String>) {
-    println("Hi from Mission 2 'collect'")
+    println("Running mode 'collect'")
     var state: State = State.Forward(0)
     val moveFun: MoveFun = { map, turn ->
         val response = move(turn, map, state)

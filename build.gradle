@@ -30,8 +30,8 @@ compileTestKotlin {
 }
 
 task execute(type: JavaExec) {
-    def mission = findProperty('mission')
-    println "Running mission${mission}"
-    main = "mission${mission}.Mission${mission}Kt"
+    def mode = findProperty('mode')
+    println "Running mode ${mode}"
+    main = "${mode.toLowerCase()}.${mode}Kt"
     classpath = sourceSets.main.runtimeClasspath
 }

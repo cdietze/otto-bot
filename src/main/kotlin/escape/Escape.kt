@@ -1,24 +1,29 @@
+package escape
+
+import BotMap
+import Command
 import Command.*
+import MoveFun
+import findObject
+import moveTowards
+import runBot
 
 /** Solution for the escape mission */
 
 // we know the map is 32x32 and the view is 5x5,
-// so we move forward 32-5 steps and then move 5 orthogonally
+// so we escape.move forward 32-5 steps and then escape.move 5 orthogonally
 const val FORWARD_COUNT = 32 - 5
 const val SIDESTEP_COUNT = 5
 
-object Mission1 {
-    @JvmStatic
-    fun main(args: Array<String>) {
-        println("Hi from ${this.javaClass}")
-        var state: State = State.Forward(0)
-        val moveFun: MoveFun = { map, turn ->
-            val response = move(turn, map, state)
-            state = response.second
-            response.first
-        }
-        runBot(moveFun)
+fun main(args: Array<String>) {
+    println("Running mode 'escape'")
+    var state: State = State.Forward(0)
+    val moveFun: MoveFun = { map, turn ->
+        val response = move(turn, map, state)
+        state = response.second
+        response.first
     }
+    runBot(moveFun)
 }
 
 fun move(turn: Int, view: BotMap, s: State): Pair<Command, State> {

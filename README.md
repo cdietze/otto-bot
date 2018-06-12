@@ -2,4 +2,10 @@ A bot for [bots](https://github.com/markusfisch/bots).
 
 To run call
 
-    ./gradlew --console=plain execute -Pmission=0
+    ./gradlew --console=plain execute -Pmode=MODE
+    
+where `MODE` is one of
+
+- `Hello`
+- `Escape`
+- `Collect`
