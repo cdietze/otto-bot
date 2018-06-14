@@ -27,7 +27,6 @@ fun runBot(moveFun: MoveFun) {
                     println("I am ${map.playerSymbol()}")
                 }
                 val command = moveFun.invoke(map, turn)
-                println("command is $command")
                 output.write(command.toInt())
             }
         }

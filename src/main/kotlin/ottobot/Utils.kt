@@ -9,8 +9,6 @@ data class Vec(val x: Int, val y: Int) : Comparable<Vec> {
 operator fun Vec.plus(v: Vec): Vec = Vec(x + v.x, y + v.y)
 operator fun Vec.minus(v: Vec): Vec = Vec(x - v.x, y - v.y)
 
-val vecComparator: Comparator<Vec> = compareBy<Vec> { it.x }.thenBy { it.y }
-
 fun Vec.alignToNorth(dir: Dir): Vec = when (dir) {
     Dir.NORTH -> this
     Dir.EAST -> Vec(-y, x)
@@ -55,6 +53,16 @@ fun BotMap.dim(): Dim = Dim(this[0].length, this.size)
 fun BotMap.zipWithVec(): Map<Vec, Char> {
     val dim = dim()
     return this.joinToString("").withIndex().map { Pair(vecFromPlayer(dim, it.index), it.value) }.toMap()
+}
+
+fun BotMap.charAt(vec: Vec): Char? {
+    val dim = dim()
+    return this.getOrNull(dim.height / 2 + vec.y)?.getOrNull(dim.width / 2 + vec.x)
+}
+
+fun BotMap.canMoveForward(): Boolean {
+    val c = charAt(Vec(0, -1))
+    return c != null && c == '.'
 }
 
 /**
