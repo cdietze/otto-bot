@@ -26,7 +26,9 @@ fun runBot(moveFun: MoveFun) {
                 if (turn == 1) {
                     println("I am ${map.playerSymbol()}")
                 }
-                output.write(moveFun.invoke(map, turn).char.toInt())
+                val command = moveFun.invoke(map, turn)
+                println("command is $command")
+                output.write(command.toInt())
             }
         }
     }
@@ -49,19 +51,9 @@ private fun readMap(input: BufferedReader): BotMap? {
     return result
 }
 
-enum class Command {
-    FORWARD {
-        override val char: Char = '^'
-    },
-    LEFT {
-        override val char: Char = '<'
-    },
-    RIGHT {
-        override val char: Char = '>'
-    },
-    BACKWARD {
-        override val char: Char = 'v'
-    };
+typealias Command = Char
 
-    abstract val char: Char
-}
+const val FORWARD = '^'
+const val LEFT = '<'
+const val RIGHT = '>'
+const val BACKWARD = 'v'

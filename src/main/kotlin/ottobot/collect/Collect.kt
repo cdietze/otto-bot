@@ -1,7 +1,6 @@
 package ottobot.collect
 
 import ottobot.*
-import ottobot.Command.*
 
 /** Solution for the collect mode */
 

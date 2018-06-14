@@ -1,6 +1,6 @@
 package ottobot.hello
 
-import ottobot.Command
+import ottobot.FORWARD
 import ottobot.MoveFun
 import ottobot.dim
 import ottobot.runBot
@@ -11,7 +11,7 @@ fun main(args: Array<String>) {
         val dim = map.dim()
         val c = map.get(dim.height / 2)[dim.width / 2]
         println("I am $c")
-        Command.FORWARD
+        FORWARD
     }
     runBot(moveFun)
 }

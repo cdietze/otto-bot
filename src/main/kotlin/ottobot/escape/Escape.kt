@@ -1,7 +1,6 @@
 package ottobot.escape
 
 import ottobot.*
-import ottobot.Command.*
 
 /** Solution for the escape mission */
 

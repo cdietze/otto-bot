@@ -1,6 +1,6 @@
 package ottobot.avoid
 
-import ottobot.Command.FORWARD
+import ottobot.FORWARD
 import ottobot.MoveFun
 import ottobot.runBot
 
