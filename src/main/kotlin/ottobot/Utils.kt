@@ -65,6 +65,11 @@ fun BotMap.canMoveForward(): Boolean {
     return c != null && c == '.'
 }
 
+fun BotMap.canMoveBackward(): Boolean {
+    val c = charAt(Vec(0, 1))
+    return c != null && c == '.'
+}
+
 /**
  * @param dim The dimension of the view area
  * @param index The index of the object to be located

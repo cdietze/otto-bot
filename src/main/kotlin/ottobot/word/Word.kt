@@ -2,7 +2,8 @@ package ottobot.word
 
 import ottobot.*
 
-/** Solution for the word mission
+/**
+ * Solution for the word mission
  *
  * TODO Known issues:
  * - Fails when a letter is found after looping the world - these will be considered separate words and will never pass

@@ -9,3 +9,5 @@ where `MODE` is one of
 - `Hello`
 - `Escape`
 - `Collect`
+- `Word`
+- `Avoid`
