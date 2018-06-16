@@ -9,11 +9,24 @@ data class Vec(val x: Int, val y: Int) : Comparable<Vec> {
 operator fun Vec.plus(v: Vec): Vec = Vec(x + v.x, y + v.y)
 operator fun Vec.minus(v: Vec): Vec = Vec(x - v.x, y - v.y)
 
+fun Vec.neighbors(): List<Vec> = listOf(Vec(x + 1, y), Vec(x, y + 1), Vec(x - 1, y), Vec(x, y - 1))
+
+/** @returns the number of moves to reach [this]
+ * (when x != 0 we need to turn once) */
+fun Vec.movesAway(): Int = y + if (x == 0) 0 else 1 + x
+
 fun Vec.alignToNorth(dir: Dir): Vec = when (dir) {
     Dir.NORTH -> this
     Dir.EAST -> Vec(-y, x)
     Dir.SOUTH -> Vec(-x, -y)
     Dir.WEST -> Vec(y, -x)
+}
+
+fun Vec.alignFromNorth(dir: Dir): Vec = when (dir) {
+    Dir.NORTH -> this
+    Dir.EAST -> Vec(y, -x)
+    Dir.SOUTH -> Vec(-x, -y)
+    Dir.WEST -> Vec(-y, x)
 }
 
 enum class Dir {
@@ -39,13 +52,33 @@ fun Dir.left(): Dir = when (this) {
 
 fun Dir.right(): Dir = left().left().left()
 
-fun moveTowards(vec: Vec): Command {
+fun moveTo(vec: Vec): Command {
     return when {
         vec.y < 0 -> FORWARD
         vec.y > 0 -> BACKWARD
         vec.x < 0 -> LEFT
         else -> RIGHT
     }
+}
+
+fun moveTo(vec: Vec, myDir: Dir): Command {
+    println("moveTo, vec=$vec, myDir=$myDir, vec.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${moveTo(vec.alignToNorth(myDir))}")
+    return moveTo(vec.alignFromNorth(myDir))
+}
+
+fun moveCloseTo(dim: Dim, vec: Vec): Command {
+    val radiusX = dim.width / 2
+    val radiusY = dim.height / 2
+    return when {
+        vec.y < -radiusY -> FORWARD
+        vec.y > radiusY -> BACKWARD
+        vec.x < 0 -> LEFT
+        else -> RIGHT
+    }
+}
+
+fun moveCloseTo(dim: Dim, vec: Vec, myDir: Dir): Command {
+    return moveCloseTo(dim, vec.alignFromNorth(myDir))
 }
 
 fun BotMap.dim(): Dim = Dim(this[0].length, this.size)

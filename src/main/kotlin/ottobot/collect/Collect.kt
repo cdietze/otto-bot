@@ -61,7 +61,7 @@ sealed class State {
                 }
                 return oldState.move(view)
             }
-            val cmd = moveTowards(gem)
+            val cmd = moveTo(gem)
             val newRotation = rotation + when (cmd) {
                 LEFT -> -1
                 RIGHT -> 1

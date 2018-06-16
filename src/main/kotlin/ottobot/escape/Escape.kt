@@ -24,7 +24,7 @@ fun move(turn: Int, view: BotMap, s: State): Pair<Command, State> {
     val exit = findObject(view, 'O')
     if (exit != null) {
         println("Turn $turn, I can see the exit!")
-        return Pair(moveTowards(exit), s)
+        return Pair(moveTo(exit), s)
     }
     return s.move()
 }

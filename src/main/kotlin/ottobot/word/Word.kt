@@ -5,22 +5,23 @@ import ottobot.*
 /**
  * Solution for the word mission
  *
- * TODO Known issues:
- * - Fails when a letter is found after looping the world - these will be considered separate words and will never pass
+ * Known issues:
+ * - Fails when a letter is found after looping the world - these will be considered separate words and will never pass,
+ *   however this should not occur since when the first letter is found, the bot tries to explore the local word
+ * - If the bot would approach the word front on, it would keep moving forward to explore the word and thus be blocked
+ *   forever
  */
-
-const val VIEW_DIST = 5
 
 fun main(args: Array<String>) {
     println("Running mode 'word'")
-    var state: State = State.Spiral()
+    var state: State = State.ExploreWord()
     var ctx = StateContext()
-    val moveFun: MoveFun = { map, turn ->
-        ctx = ctx.copy(view = map)
+    val moveFun: MoveFun = { map, move ->
+        ctx = ctx.copy(view = map, move = move)
         ctx = ctx.copy(knownMap = updateKnownMap(ctx))
         ctx = ctx.copy(move = ctx.move + 1)
-        Thread.sleep(100)
-        val response = state.move(ctx)
+        Thread.sleep(10)
+        val response = state.move(ctx) ?: error("State did not produce a command!, state: $state")
         println("ctx: $ctx, state: $state, command: ${response.first}, canMoveForward: ${ctx.view.canMoveForward()}")
         state = response.second
         ctx = when (response.first) {
@@ -44,27 +45,34 @@ fun updateKnownMap(ctx: StateContext): KnownMap =
             )
         }
 
-fun tryToFindWord(ctx: StateContext): String? {
+fun tryToFindWord(ctx: StateContext, next: State): State? {
     val letters: List<Pair<Vec, Char>> = ctx.knownMap.filterValues { it.isLetter() && it.isLowerCase() }.toList().sortedBy { it.first }
-    if (letters.size < 2) return null
+    if (letters.size == 0) return null
+    if (letters.size == 1) return State.Explore(letters.first().first.neighbors(), next)
     val letterVec = letters[1].first - letters[0].first
-    val foundStart = ctx.knownMap.containsKey(letters.first().first - letterVec)
-    val foundEnd = ctx.knownMap.containsKey(letters.last().first + letterVec)
+    val leadingVec = letters.first().first - letterVec
+    val trailingVec = letters.last().first + letterVec
+    val openEnds = listOf(leadingVec, trailingVec).filter { !ctx.knownMap.containsKey(it) }
     val word = letters.map { it.second }.joinToString("")
     println("tryToFindWord: word=$word, length=${word.length}, letterVec=$letterVec, letters=$letters")
-    return if (foundStart && foundEnd) word else null
+    return if (openEnds.isEmpty()) State.EnterWord(word) else State.Explore(openEnds, next)
+}
+
+fun tryExplore(ctx: StateContext, targets: List<Vec>): Command? {
+    val dim = ctx.view.dim()
+    val unexplored = targets.filter { !ctx.knownMap.containsKey(it) }
+    println("unexplored=$unexplored")
+    return unexplored.map { it - ctx.vec }.sortedBy { x -> x.movesAway() }.firstOrNull()?.let { moveCloseTo(dim, it, ctx.dir) }
 }
 
 sealed class State {
-    data class Spiral(
-            val stepsTaken: Int = 0, val turnsTaken: Int = 0) : State() {
-        val edgeLength = ((turnsTaken / 2) + 1) * VIEW_DIST
-        override fun move(ctx: StateContext): Pair<Command, State> =
-                tryToFindWord(ctx)?.let {
-                    println("I found the word: '$it' (or '${it.reversed()}')")
-                    EnterWord(it).move(ctx)
-                } ?: if (stepsTaken >= edgeLength || !ctx.view.canMoveForward()) Pair(LEFT, Spiral(0, turnsTaken + 1))
-                else Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
+
+    data class Spiral(val stepsTaken: Int = 0, val turnsTaken: Int = 0) : State() {
+        override fun move(ctx: StateContext): Pair<Command, State> {
+            val edgeLength = ((turnsTaken / 2) + 1) * ctx.view.dim().width
+            return if (stepsTaken >= edgeLength || !ctx.view.canMoveForward()) Pair(LEFT, Spiral(0, turnsTaken + 1))
+            else Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
+        }
     }
 
     data class EnterWord(val word: String, val index: Int = 0) : State() {
@@ -74,7 +82,25 @@ sealed class State {
         }
     }
 
-    abstract fun move(ctx: StateContext): Pair<Command, State>
+    data class Explore(val targets: List<Vec>, val next: State) : State() {
+        override fun move(ctx: StateContext): Pair<Command, State>? {
+            return tryExplore(ctx, targets)?.let { Pair(it, this) } ?: next.move(ctx)
+        }
+    }
+
+    data class ExploreWord(val spiral: State = State.Spiral()) : State() {
+        override fun move(ctx: StateContext): Pair<Command, State>? {
+            return tryToFindWord(ctx, this)?.move(ctx)
+                    ?: progressSpiral(ctx)
+        }
+
+        private fun progressSpiral(ctx: StateContext): Pair<Command, State>? {
+            val r = spiral.move(ctx)
+            return r?.let { Pair(it.first, copy(spiral = it.second)) }
+        }
+    }
+
+    abstract fun move(ctx: StateContext): Pair<Command, State>?
 }
 
 /**
