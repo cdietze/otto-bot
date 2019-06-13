@@ -12,7 +12,7 @@ import ottobot.*
  *   forever
  */
 
-fun main(args: Array<String>) {
+fun main() {
     println("Running mode 'word'")
     var state: State = State.ExploreWord()
     var ctx = StateContext()
@@ -47,7 +47,7 @@ fun updateKnownMap(ctx: StateContext): KnownMap =
 
 fun tryToFindWord(ctx: StateContext, next: State): State? {
     val letters: List<Pair<Vec, Char>> = ctx.knownMap.filterValues { it.isLetter() && it.isLowerCase() }.toList().sortedBy { it.first }
-    if (letters.size == 0) return null
+    if (letters.isEmpty()) return null
     if (letters.size == 1) return State.Explore(letters.first().first.neighbors(), next)
     val letterVec = letters[1].first - letters[0].first
     val leadingVec = letters.first().first - letterVec
@@ -88,7 +88,7 @@ sealed class State {
         }
     }
 
-    data class ExploreWord(val spiral: State = State.Spiral()) : State() {
+    data class ExploreWord(val spiral: State = Spiral()) : State() {
         override fun move(ctx: StateContext): Pair<Command, State>? {
             return tryToFindWord(ctx, this)?.move(ctx)
                     ?: progressSpiral(ctx)

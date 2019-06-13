@@ -120,9 +120,9 @@ fun findObject(view: BotMap, predicate: (Char) -> Boolean): Vec? {
     else null
 }
 
-fun findObject(view: BotMap, o: Char): Vec? = findObject(view, { it == o })
+fun findObject(view: BotMap, o: Char): Vec? = findObject(view) { it == o }
 
 fun BotMap.playerSymbol(): Char {
     val dim = dim()
-    return this.get(dim.height / 2)[dim.width / 2]
+    return this[dim.height / 2][dim.width / 2]
 }

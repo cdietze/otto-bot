@@ -5,11 +5,11 @@ import ottobot.MoveFun
 import ottobot.dim
 import ottobot.runBot
 
-fun main(args: Array<String>) {
+fun main() {
     println("Running mode 'hello'")
     val moveFun: MoveFun = { map, _ ->
         val dim = map.dim()
-        val c = map.get(dim.height / 2)[dim.width / 2]
+        val c = map[dim.height / 2][dim.width / 2]
         println("I am $c")
         FORWARD
     }

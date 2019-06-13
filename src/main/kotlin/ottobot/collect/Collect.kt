@@ -9,7 +9,7 @@ import ottobot.*
 const val FORWARD_COUNT = 32 - 5
 const val SIDESTEP_COUNT = 5
 
-fun main(args: Array<String>) {
+fun main() {
     println("Running mode 'collect'")
     var state: State = State.Forward(0)
     val moveFun: MoveFun = { map, turn ->

@@ -7,7 +7,7 @@ import ottobot.*
  * Note: works really bad
  */
 
-fun main(args: Array<String>) {
+fun main() {
     println("Running mode 'avoid'")
     var state: State = State.Avoid
     var ctx = StateContext()
