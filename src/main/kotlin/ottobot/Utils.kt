@@ -62,7 +62,7 @@ fun moveTo(vec: Vec): Command {
 }
 
 fun moveTo(vec: Vec, myDir: Dir): Command {
-    println("moveTo, vec=$vec, myDir=$myDir, vec.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${moveTo(vec.alignToNorth(myDir))}")
+    println("moveTo, pos=$vec, myDir=$myDir, pos.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${moveTo(vec.alignToNorth(myDir))}")
     return moveTo(vec.alignFromNorth(myDir))
 }
 

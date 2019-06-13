@@ -19,8 +19,8 @@ fun main() {
         println("ctx: $ctx, state: $state, command: ${response.first}, canMoveForward: ${ctx.view.canMoveForward()}")
         state = response.second
         ctx = when (response.first) {
-            FORWARD -> ctx.copy(vec = ctx.vec + ctx.dir.toVec())
-            BACKWARD -> ctx.copy(vec = ctx.vec - ctx.dir.toVec())
+            FORWARD -> ctx.copy(pos = ctx.pos + ctx.dir.toVec())
+            BACKWARD -> ctx.copy(pos = ctx.pos - ctx.dir.toVec())
             LEFT -> ctx.copy(dir = ctx.dir.left())
             RIGHT -> ctx.copy(dir = ctx.dir.right())
             else -> ctx
@@ -57,10 +57,10 @@ fun BotMap.asteroidCount(vecs: List<Vec>): Int {
 
 /**
  * @param view the current view of the map
- * @param vec the current position of the bot
+ * @param pos the current position of the bot
  * @param dir the current direction of the bot
  */
-data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val dir: Dir = Dir.NORTH, val vec: Vec = Vec(0, 0)) {
+data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val dir: Dir = Dir.NORTH, val pos: Vec = Vec(0, 0)) {
     override fun toString(): String =
-            "StateContext(move=$move, view=$view, dir=$dir, vec=$vec)"
+            "StateContext(move=$move, view=$view, dir=$dir, pos=$pos)"
 }

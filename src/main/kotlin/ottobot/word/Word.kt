@@ -25,8 +25,8 @@ fun main() {
         println("ctx: $ctx, state: $state, command: ${response.first}, canMoveForward: ${ctx.view.canMoveForward()}")
         state = response.second
         ctx = when (response.first) {
-            FORWARD -> ctx.copy(vec = ctx.vec + ctx.dir.toVec())
-            BACKWARD -> ctx.copy(vec = ctx.vec - ctx.dir.toVec())
+            FORWARD -> ctx.copy(pos = ctx.pos + ctx.dir.toVec())
+            BACKWARD -> ctx.copy(pos = ctx.pos - ctx.dir.toVec())
             LEFT -> ctx.copy(dir = ctx.dir.left())
             RIGHT -> ctx.copy(dir = ctx.dir.right())
             else -> ctx
@@ -41,7 +41,7 @@ fun updateKnownMap(ctx: StateContext): KnownMap =
             putAll(ctx.view
                     .zipWithVec()
                     .filterValues { !it.isUpperCase() }
-                    .mapKeys { it.key.alignToNorth(ctx.dir) + ctx.vec }
+                    .mapKeys { it.key.alignToNorth(ctx.dir) + ctx.pos }
             )
         }
 
@@ -62,7 +62,7 @@ fun tryExplore(ctx: StateContext, targets: List<Vec>): Command? {
     val dim = ctx.view.dim()
     val unexplored = targets.filter { !ctx.knownMap.containsKey(it) }
     println("unexplored=$unexplored")
-    return unexplored.map { it - ctx.vec }.sortedBy { x -> x.movesAway() }.firstOrNull()?.let { moveCloseTo(dim, it, ctx.dir) }
+    return unexplored.map { it - ctx.pos }.sortedBy { x -> x.movesAway() }.firstOrNull()?.let { moveCloseTo(dim, it, ctx.dir) }
 }
 
 sealed class State {
@@ -105,12 +105,12 @@ sealed class State {
 
 /**
  * @param view the current view of the map
- * @param vec the current position of the bot
+ * @param pos the current position of the bot
  * @param dir the current direction of the bot
  */
-data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val knownMap: KnownMap = mapOf(), val dir: Dir = Dir.NORTH, val vec: Vec = Vec(0, 0)) {
+data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val knownMap: KnownMap = mapOf(), val dir: Dir = Dir.NORTH, val pos: Vec = Vec(0, 0)) {
     override fun toString(): String =
-            "StateContext(move=$move, view=$view, knownMap.size=${knownMap.size}, dir=$dir, vec=$vec)"
+            "StateContext(move=$move, view=$view, knownMap.size=${knownMap.size}, dir=$dir, pos=$pos)"
 }
 
 typealias KnownMap = Map<Vec, Char>
