@@ -1,6 +1,8 @@
 package ottobot.word
 
 import ottobot.*
+import java.util.*
+import kotlin.math.max
 
 /**
  * Solution for the word mission
@@ -11,6 +13,8 @@ import ottobot.*
  * - If the bot would approach the word front on, it would keep moving forward to explore the word and thus be blocked
  *   forever
  */
+
+val random = Random(1)
 
 fun main() {
     println("Running mode 'word'")
@@ -54,15 +58,24 @@ fun tryToFindWord(ctx: StateContext, next: State): State? {
     val trailingVec = letters.last().first + letterVec
     val openEnds = listOf(leadingVec, trailingVec).filter { !ctx.knownMap.containsKey(it) }
     val word = letters.map { it.second }.joinToString("")
-    println("tryToFindWord: word=$word, length=${word.length}, letterVec=$letterVec, letters=$letters")
+    println("tryToFindWord: word=$word, length=${word.length}, letterVec=$letterVec, letters=$letters, openEnds:$openEnds")
     return if (openEnds.isEmpty()) State.EnterWord(word) else State.Explore(openEnds, next)
 }
 
 fun tryExplore(ctx: StateContext, targets: List<Vec>): Command? {
-    val dim = ctx.view.dim()
-    val unexplored = targets.filter { !ctx.knownMap.containsKey(it) }
-    println("unexplored=$unexplored")
-    return unexplored.map { it - ctx.pos }.sortedBy { x -> x.movesAway() }.firstOrNull()?.let { moveCloseTo(dim, it, ctx.dir) }
+    val viewRadius = ctx.view.viewRadius()
+    val unexploredTargets = targets.filter { !ctx.knownMap.containsKey(it) }
+    println("unexploredTargets=$unexploredTargets")
+    if (unexploredTargets.isEmpty()) {
+        return null
+    }
+    val obstacles = ctx.knownMap.filterValues { it != '.' }.keys
+    val path = shortestPathToView(ctx.pos, ctx.dir, unexploredTargets, obstacles, viewRadius)
+    println("#tryExplore, path: $path")
+    if (path != null) {
+        return path.first()
+    }
+    return randomCommand()
 }
 
 sealed class State {
@@ -70,7 +83,7 @@ sealed class State {
     data class Spiral(val stepsTaken: Int = 0, val turnsTaken: Int = 0) : State() {
         override fun move(ctx: StateContext): Pair<Command, State> {
             val edgeLength = ((turnsTaken / 2) + 1) * ctx.view.dim().width
-            return if (stepsTaken >= edgeLength || !ctx.view.canMoveForward()) Pair(LEFT, Spiral(0, turnsTaken + 1))
+            return if (stepsTaken >= edgeLength || !ctx.view.canMoveForward()) Pair(if (random.nextBoolean()) LEFT else RIGHT, Spiral(0, turnsTaken + 1))
             else Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
         }
     }
@@ -84,7 +97,7 @@ sealed class State {
 
     data class Explore(val targets: List<Vec>, val next: State) : State() {
         override fun move(ctx: StateContext): Pair<Command, State>? {
-            return tryExplore(ctx, targets)?.let { Pair(it, this) } ?: next.move(ctx)
+            return tryExplore(ctx, targets)?.let { Pair(it, next) } ?: next.move(ctx)
         }
     }
 
@@ -114,3 +127,81 @@ data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val know
 }
 
 typealias KnownMap = Map<Vec, Char>
+
+data class Node(val pos: Vec, val dir: Dir)
+
+//typealias Move = Pair<Command, Node>
+data class Move(val command: Command, val node: Node)
+
+fun Node.moves(): List<Move> = listOf(
+        Move('<', this.copy(dir = dir.left())),
+        Move('>', this.copy(dir = dir.right())),
+        Move('^', this.copy(pos = pos + dir.toVec())),
+        Move('v', this.copy(pos = pos - dir.toVec()))
+)
+
+fun randomCommand(): Command = when (random.nextInt(4)) {
+    0 -> '<'
+    1 -> '>'
+    2 -> '^'
+    else -> 'v'
+}
+
+val maxCost = 100
+
+fun shortestPathToView(pos: Vec, dir: Dir, targets: List<Vec>, obstacles: Set<Vec>, viewRadius: Int): List<Command>? {
+
+    println("#shortestPathToView pos:$pos, dir:$dir, targets:$targets")
+
+    require(!targets.isEmpty())
+
+    //    fun heuristic(target: Vec, n: Node): Int = (target - n.pos).manhattanDistance()
+    fun heuristic(target: Vec, n: Node): Int {
+        val v = target - n.pos
+        val x = max(0, v.x - viewRadius - 1)
+        val y = max(0, v.y - viewRadius - 1)
+        val offDir = if (n.dir == Dir.EAST || n.dir == Dir.WEST) y else x
+        return x + y + if (offDir > 0) 1 else 0
+    }
+
+    val startNode = Node(pos, dir)
+    val frontier = PriorityQueue<Pair<Int, Node>>(compareBy { it.first })
+    frontier.add(Pair(0, startNode))
+    val cameFrom = mutableMapOf<Node, Move>()
+    val costSoFar = mutableMapOf<Node, Int>()
+    costSoFar[startNode] = 0
+
+    while (!frontier.isEmpty()) {
+        val current: Node = frontier.poll().second
+//        println("#shortestPathToView frontier:${frontier.size}, current:$current, cameFrom:${cameFrom.entries}")
+        if (targets.any { (it - current.pos).manhattanDistance() <= viewRadius }) {
+            val result = mutableListOf<Command>()
+            var n = current
+            while (true) {
+                val n2 = cameFrom[n] ?: return result.reversed()
+                n = n2.node
+                result.add(n2.command)
+            }
+        }
+
+        for (m in current.moves()) {
+            if (obstacles.contains(m.node.pos)) continue
+            val newCost = costSoFar[current]!! + 1
+            if (newCost > maxCost) {
+                println("WARN: #shortestPathToView exceeded max moves")
+                return null
+            }
+            val seenBetter = costSoFar[m.node]?.let { newCost > it } == true
+            if (!seenBetter) {
+                costSoFar[m.node] = newCost
+                val priority = newCost + (targets.map { heuristic(it, m.node) }.min()!!)
+                frontier.add(Pair(priority, m.node))
+                cameFrom[m.node] = Move(m.command, current)
+            }
+        }
+    }
+
+    // Targets are unreachable
+    println("WARN: #shortestPathToView found no reachable target")
+    return null
+}

@@ -1,5 +1,7 @@
 package ottobot
 
+import kotlin.math.abs
+
 data class Dim(val width: Int, val height: Int)
 
 data class Vec(val x: Int, val y: Int) : Comparable<Vec> {
@@ -14,6 +16,8 @@ fun Vec.neighbors(): List<Vec> = listOf(Vec(x + 1, y), Vec(x, y + 1), Vec(x - 1,
 /** @returns the number of moves to reach [this]
  * (when x != 0 we need to turn once) */
 fun Vec.movesAway(): Int = y + if (x == 0) 0 else 1 + x
+
+fun Vec.manhattanDistance(): Int = abs(y) + abs(x)
 
 fun Vec.alignToNorth(dir: Dir): Vec = when (dir) {
     Dir.NORTH -> this
@@ -82,6 +86,9 @@ fun moveCloseTo(dim: Dim, vec: Vec, myDir: Dir): Command {
 }
 
 fun BotMap.dim(): Dim = Dim(this[0].length, this.size)
+
+// We just assume the view is a square
+fun BotMap.viewRadius(): Int = this.size / 2
 
 fun BotMap.zipWithVec(): Map<Vec, Char> {
     val dim = dim()
