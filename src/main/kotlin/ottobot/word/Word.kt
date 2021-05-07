@@ -227,7 +227,7 @@ fun shortestPathToView(pos: Vec, dir: Dir, targets: List<Vec>, obstacles: Set<Ve
             val seenBetter = costSoFar[m.node]?.let { newCost > it } == true
             if (!seenBetter) {
                 costSoFar[m.node] = newCost
-                val priority = newCost + (targets.map { heuristic(it, m.node) }.min()!!)
+                val priority = newCost + (targets.map { heuristic(it, m.node) }.minOrNull()!!)
                 frontier.add(Pair(priority, m.node))
                 cameFrom[m.node] = Move(m.command, current)
             }
