@@ -83,8 +83,11 @@ sealed class State {
     data class Spiral(val stepsTaken: Int = 0, val turnsTaken: Int = 0) : State() {
         override fun move(ctx: StateContext): Pair<Command, State> {
             val edgeLength = ((turnsTaken / 2) + 1) * ctx.view.dim().width
-            return if (stepsTaken >= edgeLength || !ctx.view.canMoveForward()) Pair(if (random.nextBoolean()) LEFT else RIGHT, Spiral(0, turnsTaken + 1))
-            else Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
+            return when {
+                !ctx.view.canMoveForward() -> Pair(if (random.nextBoolean()) LEFT else RIGHT, Spiral(0, 0))
+                stepsTaken >= edgeLength -> Pair(LEFT, Spiral(0, turnsTaken + 1))
+                else -> Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
+            }
         }
     }
 
