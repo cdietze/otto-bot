@@ -28,12 +28,6 @@ import kotlin.math.max
 
 /**
  * Solution for the word mission
- *
- * Known issues:
- * - Fails when a letter is found after looping the world - these will be considered separate words and will never pass,
- *   however this should not occur since when the first letter is found, the bot tries to explore the local word
- * - If the bot would approach the word front on, it would keep moving forward to explore the word and thus be blocked
- *   forever
  */
 
 val random = Random(1)
