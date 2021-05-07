@@ -28,6 +28,10 @@ import kotlin.math.max
 
 /**
  * Solution for the word mission
+ *
+ * Works on `plain` and `random` (with obstacles) terrain.
+ *
+ * Start the server for example using `./bots -G -1 -V 1 -t random word`
  */
 
 val random = Random(1)
