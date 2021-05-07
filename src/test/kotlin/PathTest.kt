@@ -26,4 +26,3 @@ fun test3() {
     check(result!!.size == 3)
     check(result.all { it == '^' })
 }
-

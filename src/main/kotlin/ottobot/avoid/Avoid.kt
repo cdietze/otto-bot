@@ -1,6 +1,22 @@
 package ottobot.avoid
 
-import ottobot.*
+import ottobot.BACKWARD
+import ottobot.BotMap
+import ottobot.Command
+import ottobot.Dir
+import ottobot.FORWARD
+import ottobot.LEFT
+import ottobot.MoveFun
+import ottobot.RIGHT
+import ottobot.Vec
+import ottobot.canMoveForward
+import ottobot.dim
+import ottobot.left
+import ottobot.minus
+import ottobot.plus
+import ottobot.right
+import ottobot.runBot
+import ottobot.toVec
 
 /**
  * Solution for the avoid mission
@@ -45,10 +61,10 @@ sealed class State {
 }
 
 fun BotMap.forwardThreats(): Int =
-        asteroidCount(listOf(Vec(-1, 0), Vec(-1, -1), Vec(-1, -2), Vec(0, -2), Vec(1, -2), Vec(1, -1), Vec(1, 0)))
+    asteroidCount(listOf(Vec(-1, 0), Vec(-1, -1), Vec(-1, -2), Vec(0, -2), Vec(1, -2), Vec(1, -1), Vec(1, 0)))
 
 fun BotMap.backwardThreats(): Int =
-        asteroidCount(listOf(Vec(-1, 0), Vec(-1, 1), Vec(-1, 2), Vec(0, 2), Vec(1, 2), Vec(1, 1), Vec(1, 0)))
+    asteroidCount(listOf(Vec(-1, 0), Vec(-1, 1), Vec(-1, 2), Vec(0, 2), Vec(1, 2), Vec(1, 1), Vec(1, 0)))
 
 fun BotMap.asteroidCount(vecs: List<Vec>): Int {
     val dim = dim()
@@ -62,5 +78,5 @@ fun BotMap.asteroidCount(vecs: List<Vec>): Int {
  */
 data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val dir: Dir = Dir.NORTH, val pos: Vec = Vec(0, 0)) {
     override fun toString(): String =
-            "StateContext(move=$move, view=$view, dir=$dir, pos=$pos)"
+        "StateContext(move=$move, view=$view, dir=$dir, pos=$pos)"
 }

@@ -1,6 +1,14 @@
 package ottobot.collect
 
-import ottobot.*
+import ottobot.BotMap
+import ottobot.Command
+import ottobot.FORWARD
+import ottobot.LEFT
+import ottobot.MoveFun
+import ottobot.RIGHT
+import ottobot.findObject
+import ottobot.moveTo
+import ottobot.runBot
 
 /** Solution for the collect mode */
 
@@ -32,25 +40,28 @@ fun move(turn: Int, view: BotMap, s: State): Pair<Command, State> {
 
 sealed class State {
     data class Forward(
-            val steps: Int = FORWARD_COUNT) : State() {
+        val steps: Int = FORWARD_COUNT
+    ) : State() {
         override fun move(view: BotMap): Pair<Command, State> =
-                if (steps == 0) Pair(LEFT, Orthogonal())
-                else Pair(FORWARD, copy(steps = steps - 1))
+            if (steps == 0) Pair(LEFT, Orthogonal())
+            else Pair(FORWARD, copy(steps = steps - 1))
     }
 
     data class Orthogonal(
-            val steps: Int = SIDESTEP_COUNT) : State() {
+        val steps: Int = SIDESTEP_COUNT
+    ) : State() {
         override fun move(view: BotMap): Pair<Command, State> =
-                if (steps == 0) Pair(RIGHT, Forward())
-                else Pair(FORWARD, copy(steps = steps - 1))
+            if (steps == 0) Pair(RIGHT, Forward())
+            else Pair(FORWARD, copy(steps = steps - 1))
     }
 
     /**
      * @param rotation number of ottobot.right turns. negative number means number of ottobot.left turns
      */
     data class Fetch(
-            val oldState: State,
-            val rotation: Int) : State() {
+        val oldState: State,
+        val rotation: Int
+    ) : State() {
         override fun move(view: BotMap): Pair<Command, State> {
             val gem = findObject(view, '@')
             if (gem == null) {

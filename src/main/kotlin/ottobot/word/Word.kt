@@ -1,7 +1,29 @@
 package ottobot.word
 
-import ottobot.*
-import java.util.*
+import ottobot.BACKWARD
+import ottobot.BotMap
+import ottobot.Command
+import ottobot.Dir
+import ottobot.FORWARD
+import ottobot.LEFT
+import ottobot.MoveFun
+import ottobot.RIGHT
+import ottobot.Vec
+import ottobot.alignToNorth
+import ottobot.canMoveForward
+import ottobot.dim
+import ottobot.left
+import ottobot.manhattanDistance
+import ottobot.minus
+import ottobot.neighbors
+import ottobot.plus
+import ottobot.right
+import ottobot.runBot
+import ottobot.toVec
+import ottobot.viewRadius
+import ottobot.zipWithVec
+import java.util.PriorityQueue
+import java.util.Random
 import kotlin.math.max
 
 /**
@@ -41,16 +63,18 @@ fun main() {
 }
 
 fun updateKnownMap(ctx: StateContext): KnownMap =
-        ctx.knownMap.toMutableMap().apply {
-            putAll(ctx.view
-                    .zipWithVec()
-                    .filterValues { !it.isUpperCase() }
-                    .mapKeys { it.key.alignToNorth(ctx.dir) + ctx.pos }
-            )
-        }
+    ctx.knownMap.toMutableMap().apply {
+        putAll(
+            ctx.view
+                .zipWithVec()
+                .filterValues { !it.isUpperCase() }
+                .mapKeys { it.key.alignToNorth(ctx.dir) + ctx.pos }
+        )
+    }
 
 fun tryToFindWord(ctx: StateContext, next: State): State? {
-    val letters: List<Pair<Vec, Char>> = ctx.knownMap.filterValues { it.isLetter() && it.isLowerCase() }.toList().sortedBy { it.first }
+    val letters: List<Pair<Vec, Char>> =
+        ctx.knownMap.filterValues { it.isLetter() && it.isLowerCase() }.toList().sortedBy { it.first }
     if (letters.isEmpty()) return null
     if (letters.size == 1) return State.Explore(letters.first().first.neighbors(), next)
     val letterVec = letters[1].first - letters[0].first
@@ -107,7 +131,7 @@ sealed class State {
     data class ExploreWord(val spiral: State = Spiral()) : State() {
         override fun move(ctx: StateContext): Pair<Command, State>? {
             return tryToFindWord(ctx, this)?.move(ctx)
-                    ?: progressSpiral(ctx)
+                ?: progressSpiral(ctx)
         }
 
         private fun progressSpiral(ctx: StateContext): Pair<Command, State>? {
@@ -124,23 +148,29 @@ sealed class State {
  * @param pos the current position of the bot
  * @param dir the current direction of the bot
  */
-data class StateContext(val move: Int = 0, val view: BotMap = listOf(), val knownMap: KnownMap = mapOf(), val dir: Dir = Dir.NORTH, val pos: Vec = Vec(0, 0)) {
+data class StateContext(
+    val move: Int = 0,
+    val view: BotMap = listOf(),
+    val knownMap: KnownMap = mapOf(),
+    val dir: Dir = Dir.NORTH,
+    val pos: Vec = Vec(0, 0)
+) {
     override fun toString(): String =
-            "StateContext(move=$move, view=$view, knownMap.size=${knownMap.size}, dir=$dir, pos=$pos)"
+        "StateContext(move=$move, view=$view, knownMap.size=${knownMap.size}, dir=$dir, pos=$pos)"
 }
 
 typealias KnownMap = Map<Vec, Char>
 
 data class Node(val pos: Vec, val dir: Dir)
 
-//typealias Move = Pair<Command, Node>
+// typealias Move = Pair<Command, Node>
 data class Move(val command: Command, val node: Node)
 
 fun Node.moves(): List<Move> = listOf(
-        Move('<', this.copy(dir = dir.left())),
-        Move('>', this.copy(dir = dir.right())),
-        Move('^', this.copy(pos = pos + dir.toVec())),
-        Move('v', this.copy(pos = pos - dir.toVec()))
+    Move('<', this.copy(dir = dir.left())),
+    Move('>', this.copy(dir = dir.right())),
+    Move('^', this.copy(pos = pos + dir.toVec())),
+    Move('v', this.copy(pos = pos - dir.toVec()))
 )
 
 fun randomCommand(): Command = when (random.nextInt(4)) {
