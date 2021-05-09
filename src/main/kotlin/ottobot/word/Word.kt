@@ -7,11 +7,13 @@ import ottobot.Dir
 import ottobot.FORWARD
 import ottobot.LEFT
 import ottobot.MoveFun
+import ottobot.Node
 import ottobot.RIGHT
 import ottobot.Vec
 import ottobot.alignToNorth
+import ottobot.breadthFirst
 import ottobot.canMoveForward
-import ottobot.dim
+import ottobot.command
 import ottobot.left
 import ottobot.manhattanDistance
 import ottobot.minus
@@ -38,7 +40,7 @@ val random = Random(1)
 
 fun main() {
     println("Running mode 'word'")
-    var state: State = State.ExploreWord()
+    var state: State = State.ExploreWord
     var ctx = StateContext()
     val moveFun: MoveFun = { map, move ->
         ctx = ctx.copy(view = map, move = move)
@@ -65,7 +67,7 @@ fun updateKnownMap(ctx: StateContext): KnownMap =
         putAll(
             ctx.view
                 .zipWithVec()
-                .filterValues { !it.isUpperCase() }
+                .mapValues { if (it.value.isUpperCase()) '.' else it.value }
                 .mapKeys { it.key.alignToNorth(ctx.dir) + ctx.pos }
         )
     }
@@ -102,17 +104,6 @@ fun tryExplore(ctx: StateContext, targets: List<Vec>): Command? {
 
 sealed class State {
 
-    data class Spiral(val stepsTaken: Int = 0, val turnsTaken: Int = 0) : State() {
-        override fun move(ctx: StateContext): Pair<Command, State> {
-            val edgeLength = ((turnsTaken / 2) + 1) * ctx.view.dim().width
-            return when {
-                !ctx.view.canMoveForward() -> Pair(if (random.nextBoolean()) LEFT else RIGHT, Spiral(0, 0))
-                stepsTaken >= edgeLength -> Pair(LEFT, Spiral(0, turnsTaken + 1))
-                else -> Pair(FORWARD, copy(stepsTaken = stepsTaken + 1))
-            }
-        }
-    }
-
     data class EnterWord(val word: String, val index: Int = 0) : State() {
         override fun move(ctx: StateContext): Pair<Command, State> {
             if (index >= word.length) return EnterWord(word.reversed()).move(ctx)
@@ -126,15 +117,30 @@ sealed class State {
         }
     }
 
-    data class ExploreWord(val spiral: State = Spiral()) : State() {
+    object ExploreWord : State() {
         override fun move(ctx: StateContext): Pair<Command, State>? {
             return tryToFindWord(ctx, this)?.move(ctx)
-                ?: progressSpiral(ctx)
+                ?: Pair(explore(ctx), this)
         }
 
-        private fun progressSpiral(ctx: StateContext): Pair<Command, State>? {
-            val r = spiral.move(ctx)
-            return r?.let { Pair(it.first, copy(spiral = it.second)) }
+        private fun explore(ctx: StateContext): Command {
+            val obstacles = ctx.knownMap.filterValues { it != '.' }.keys
+
+            val result = breadthFirst(ctx.pos, ctx.dir, obstacles, ctx.view.viewRadius())
+
+            val targets: Set<Vec> =
+                ctx.knownMap.keys.flatMap { it.neighbors() }.filter { !ctx.knownMap.containsKey(it) }.toSet()
+
+            val bestPair: Pair<Vec, List<Node>?>? = targets.map { t ->
+                val path = result.path(t)
+                Pair(t, path)
+            }.minByOrNull {
+                it.second?.size?.let { moves -> moves + it.first.manhattanDistance() * 0.3f } ?: Float.MAX_VALUE
+            }
+
+            val path = bestPair?.second
+            val c = path?.let { p -> command(p[p.size - 2], p[p.size - 1]) }
+            return c ?: randomCommand()
         }
     }
 

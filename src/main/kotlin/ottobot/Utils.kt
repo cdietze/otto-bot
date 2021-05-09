@@ -66,7 +66,15 @@ fun moveTo(vec: Vec): Command {
 }
 
 fun moveTo(vec: Vec, myDir: Dir): Command {
-    println("moveTo, pos=$vec, myDir=$myDir, pos.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${moveTo(vec.alignToNorth(myDir))}")
+    println(
+        "moveTo, pos=$vec, myDir=$myDir, pos.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${
+        moveTo(
+            vec.alignToNorth(
+                myDir
+            )
+        )
+        }"
+    )
     return moveTo(vec.alignFromNorth(myDir))
 }
 
@@ -132,4 +140,83 @@ fun findObject(view: BotMap, o: Char): Vec? = findObject(view) { it == o }
 fun BotMap.playerSymbol(): Char {
     val dim = dim()
     return this[dim.height / 2][dim.width / 2]
+}
+
+interface BreadthFirstResult {
+    fun path(target: Vec): List<Node>?
+}
+
+data class Node(val pos: Vec, val dir: Dir)
+
+private inline fun canSee(n: Node, v: Vec, viewRadius: Int): Boolean = (v - n.pos).manhattanDistance() <= viewRadius
+
+fun Node.neighbors(): List<Node> = listOf(
+    this.copy(dir = dir.left()),
+    this.copy(dir = dir.right()),
+    this.copy(pos = pos + dir.toVec()),
+    this.copy(pos = pos - dir.toVec()),
+)
+
+fun command(a: Node, b: Node): Command {
+    if (a.pos == b.pos) {
+        if (a.dir == b.dir.left()) return '<'
+        if (a.dir == b.dir.right()) return '>'
+        error("No possible command to move from $a to $b")
+    }
+    val v = a.dir.toVec()
+    if (a.pos == b.pos + v) return '^'
+    if (a.pos == b.pos - v) return 'v'
+    error("No possible command to move from $a to $b")
+}
+
+fun breadthFirst(pos: Vec, dir: Dir, obstacles: Set<Vec>, viewRadius: Int, maxCost: Int = 20): BreadthFirstResult {
+    // println("#breadthFirst, pos: $pos, dir: $dir, obstacles: ${obstacles.size}")
+    val startNode = Node(pos, dir)
+    var frontier = mutableListOf<Node>(startNode)
+    val cameFrom = mutableMapOf<Node, Node>(
+        startNode to startNode
+    )
+    val costs = mutableMapOf<Node, Int>(
+        startNode to 0
+    )
+
+    var currentCost = 0
+    while (frontier.isNotEmpty() && currentCost <= maxCost) {
+        currentCost++
+        val nextFrontier = mutableListOf<Node>()
+        for (current in frontier) {
+            for (n in current.neighbors()) {
+                if (n in cameFrom) continue
+                if (n.pos in obstacles) continue
+                nextFrontier.add(n)
+                cameFrom[n] = current
+                costs[n] = currentCost
+            }
+        }
+        frontier = nextFrontier
+    }
+
+    fun Node.path(): List<Node> {
+        val result = mutableListOf<Node>(this)
+        var n = this
+        while (true) {
+            val n2 = cameFrom[n] ?: error("")
+            if (n == n2) return result
+            n = n2
+            result.add(n2)
+        }
+    }
+
+    fun targetToNode(target: Vec): Node? {
+        val e: Map.Entry<Node, Int>? =
+            costs.filter { canSee(it.key, target, viewRadius) }.minByOrNull { entry -> entry.value }
+        return e?.key
+    }
+
+    return object : BreadthFirstResult {
+        override fun path(target: Vec): List<Node>? {
+            val n = targetToNode(target)
+            return n?.path()
+        }
+    }
 }
