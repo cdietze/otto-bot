@@ -11,9 +11,9 @@ data class Vec(val x: Int, val y: Int) : Comparable<Vec> {
 operator fun Vec.plus(v: Vec): Vec = Vec(x + v.x, y + v.y)
 operator fun Vec.minus(v: Vec): Vec = Vec(x - v.x, y - v.y)
 
-fun Vec.neighbors(): List<Vec> = listOf(Vec(x + 1, y), Vec(x, y + 1), Vec(x - 1, y), Vec(x, y - 1))
+fun Vec.neighbors(): Set<Vec> = setOf(Vec(x + 1, y), Vec(x, y + 1), Vec(x - 1, y), Vec(x, y - 1))
 
-/** @returns the number of moves to reach [this]
+/** @returns the number of moves to re2ach [this]
  * (when x != 0 we need to turn once) */
 fun Vec.movesAway(): Int = y + if (x == 0) 0 else 1 + x
 

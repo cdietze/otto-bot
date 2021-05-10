@@ -40,7 +40,7 @@ val random = Random(1)
 
 fun main() {
     println("Running mode 'word'")
-    var state: State = State.ExploreWord
+    var state: State = State.Explore
     var ctx = StateContext()
     val moveFun: MoveFun = { map, move ->
         ctx = ctx.copy(view = map, move = move)
@@ -72,76 +72,61 @@ fun updateKnownMap(ctx: StateContext): KnownMap =
         )
     }
 
-fun tryToFindWord(ctx: StateContext, next: State): State? {
+fun tryToExposeWord(ctx: StateContext, next: State): Pair<Command, State>? {
     val letters: List<Pair<Vec, Char>> =
         ctx.knownMap.filterValues { it.isLetter() && it.isLowerCase() }.toList().sortedBy { it.first }
     if (letters.isEmpty()) return null
-    if (letters.size == 1) return State.Explore(letters.first().first.neighbors(), next)
+    if (letters.size == 1) return tryExploreAnyTarget(ctx, letters.first().first.neighbors())?.let { Pair(it, next) }
     val letterVec = letters[1].first - letters[0].first
     val leadingVec = letters.first().first - letterVec
     val trailingVec = letters.last().first + letterVec
-    val openEnds = listOf(leadingVec, trailingVec).filter { !ctx.knownMap.containsKey(it) }
+    val openEnds = listOf(leadingVec, trailingVec).filter { !ctx.knownMap.containsKey(it) }.toSet()
     val word = letters.map { it.second }.joinToString("")
     println("tryToFindWord: word=$word, length=${word.length}, letterVec=$letterVec, letters=$letters, openEnds:$openEnds")
-    return if (openEnds.isEmpty()) State.EnterWord(word) else State.Explore(openEnds, next)
+    return if (openEnds.isEmpty()) State.EnterWord(word).move(ctx)
+    else tryExploreAnyTarget(ctx, openEnds)?.let { Pair(it, next) }
 }
 
-fun tryExplore(ctx: StateContext, targets: List<Vec>): Command? {
-    val viewRadius = ctx.view.viewRadius()
+fun tryExploreAnyTarget(ctx: StateContext, targets: Set<Vec>): Command? {
+    val pathResult = breadthFirst(ctx.pos, ctx.dir, ctx.knownMap.obstacles(), ctx.view.viewRadius())
     val unexploredTargets = targets.filter { !ctx.knownMap.containsKey(it) }
     println("unexploredTargets=$unexploredTargets")
-    if (unexploredTargets.isEmpty()) {
-        return null
-    }
-    val obstacles = ctx.knownMap.filterValues { it != '.' }.keys
-    val path = shortestPathToView(ctx.pos, ctx.dir, unexploredTargets, obstacles, viewRadius)
-    println("#tryExplore, path: $path")
-    if (path != null) {
-        return path.first()
-    }
-    return randomCommand()
+    val bestPath: List<Node>? = unexploredTargets.map { t -> Pair(t, pathResult.path(t)) }.minByOrNull { p ->
+        p.second?.size ?: Int.MAX_VALUE
+    }?.second
+    return bestPath?.firstCommand()
+}
+
+fun tryExplore(ctx: StateContext): Command? {
+    val pathResult = breadthFirst(ctx.pos, ctx.dir, ctx.knownMap.obstacles(), ctx.view.viewRadius())
+    val targets: Set<Vec> =
+        ctx.knownMap.keys.flatMap { it.neighbors() }.filter { !ctx.knownMap.containsKey(it) }.toSet()
+    val bestPath = targets.map { t ->
+        Pair(t, pathResult.path(t))
+    }.minByOrNull { p ->
+        p.second?.size?.let { moves -> moves + p.first.manhattanDistance() * 0.3f } ?: Float.MAX_VALUE
+    }?.second
+    return bestPath?.firstCommand()
+}
+
+fun List<Node>.firstCommand(): Command {
+    require(this.size >= 2)
+    return command(this[this.size - 2], this[this.size - 1])
 }
 
 sealed class State {
 
+    object Explore : State() {
+        override fun move(ctx: StateContext): Pair<Command, State> =
+            tryToExposeWord(ctx, this)
+                ?: tryExplore(ctx)?.let { Pair(it, this) }
+                ?: Pair(randomCommand(), this)
+    }
+
     data class EnterWord(val word: String, val index: Int = 0) : State() {
-        override fun move(ctx: StateContext): Pair<Command, State> {
-            if (index >= word.length) return EnterWord(word.reversed()).move(ctx)
-            return Pair(word[index], this.copy(index = index + 1))
-        }
-    }
-
-    data class Explore(val targets: List<Vec>, val next: State) : State() {
-        override fun move(ctx: StateContext): Pair<Command, State>? {
-            return tryExplore(ctx, targets)?.let { Pair(it, next) } ?: next.move(ctx)
-        }
-    }
-
-    object ExploreWord : State() {
-        override fun move(ctx: StateContext): Pair<Command, State>? {
-            return tryToFindWord(ctx, this)?.move(ctx)
-                ?: Pair(explore(ctx), this)
-        }
-
-        private fun explore(ctx: StateContext): Command {
-            val obstacles = ctx.knownMap.filterValues { it != '.' }.keys
-
-            val result = breadthFirst(ctx.pos, ctx.dir, obstacles, ctx.view.viewRadius())
-
-            val targets: Set<Vec> =
-                ctx.knownMap.keys.flatMap { it.neighbors() }.filter { !ctx.knownMap.containsKey(it) }.toSet()
-
-            val bestPair: Pair<Vec, List<Node>?>? = targets.map { t ->
-                val path = result.path(t)
-                Pair(t, path)
-            }.minByOrNull {
-                it.second?.size?.let { moves -> moves + it.first.manhattanDistance() * 0.3f } ?: Float.MAX_VALUE
-            }
-
-            val path = bestPair?.second
-            val c = path?.let { p -> command(p[p.size - 2], p[p.size - 1]) }
-            return c ?: randomCommand()
-        }
+        override fun move(ctx: StateContext): Pair<Command, State> =
+            if (index >= word.length) EnterWord(word.reversed()).move(ctx)
+            else Pair(word[index], this.copy(index = index + 1))
     }
 
     abstract fun move(ctx: StateContext): Pair<Command, State>?
@@ -165,9 +150,8 @@ data class StateContext(
 
 typealias KnownMap = Map<Vec, Char>
 
-data class Node(val pos: Vec, val dir: Dir)
+fun KnownMap.obstacles(): Set<Vec> = filterValues { it != '.' }.keys
 
-// typealias Move = Pair<Command, Node>
 data class Move(val command: Command, val node: Node)
 
 fun Node.moves(): List<Move> = listOf(
