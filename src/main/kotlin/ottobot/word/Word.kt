@@ -24,9 +24,7 @@ import ottobot.runBot
 import ottobot.toVec
 import ottobot.viewRadius
 import ottobot.zipWithVec
-import java.util.PriorityQueue
 import java.util.Random
-import kotlin.math.max
 
 /**
  * Solution for the word mission
@@ -154,75 +152,9 @@ fun KnownMap.obstacles(): Set<Vec> = filterValues { it != '.' }.keys
 
 data class Move(val command: Command, val node: Node)
 
-fun Node.moves(): List<Move> = listOf(
-    Move('<', this.copy(dir = dir.left())),
-    Move('>', this.copy(dir = dir.right())),
-    Move('^', this.copy(pos = pos + dir.toVec())),
-    Move('v', this.copy(pos = pos - dir.toVec()))
-)
-
 fun randomCommand(): Command = when (random.nextInt(4)) {
     0 -> '<'
     1 -> '>'
     2 -> '^'
     else -> 'v'
-}
-
-val maxCost = 100
-
-fun shortestPathToView(pos: Vec, dir: Dir, targets: List<Vec>, obstacles: Set<Vec>, viewRadius: Int): List<Command>? {
-
-    println("#shortestPathToView pos:$pos, dir:$dir, targets:$targets")
-
-    require(!targets.isEmpty())
-
-    //    fun heuristic(target: Vec, n: Node): Int = (target - n.pos).manhattanDistance()
-    fun heuristic(target: Vec, n: Node): Int {
-        val v = target - n.pos
-        val x = max(0, v.x - viewRadius - 1)
-        val y = max(0, v.y - viewRadius - 1)
-        val offDir = if (n.dir == Dir.EAST || n.dir == Dir.WEST) y else x
-        return x + y + if (offDir > 0) 1 else 0
-    }
-
-    val startNode = Node(pos, dir)
-    val frontier = PriorityQueue<Pair<Int, Node>>(compareBy { it.first })
-    frontier.add(Pair(0, startNode))
-    val cameFrom = mutableMapOf<Node, Move>()
-    val costSoFar = mutableMapOf<Node, Int>()
-    costSoFar[startNode] = 0
-
-    while (!frontier.isEmpty()) {
-        val current: Node = frontier.poll().second
-//        println("#shortestPathToView frontier:${frontier.size}, current:$current, cameFrom:${cameFrom.entries}")
-        if (targets.any { (it - current.pos).manhattanDistance() <= viewRadius }) {
-            val result = mutableListOf<Command>()
-            var n = current
-            while (true) {
-                val n2 = cameFrom[n] ?: return result.reversed()
-                n = n2.node
-                result.add(n2.command)
-            }
-        }
-
-        for (m in current.moves()) {
-            if (obstacles.contains(m.node.pos)) continue
-            val newCost = costSoFar[current]!! + 1
-            if (newCost > maxCost) {
-                println("WARN: #shortestPathToView exceeded max moves")
-                return null
-            }
-            val seenBetter = costSoFar[m.node]?.let { newCost > it } == true
-            if (!seenBetter) {
-                costSoFar[m.node] = newCost
-                val priority = newCost + (targets.map { heuristic(it, m.node) }.minOrNull()!!)
-                frontier.add(Pair(priority, m.node))
-                cameFrom[m.node] = Move(m.command, current)
-            }
-        }
-    }
-
-    // Targets are unreachable
-    println("WARN: #shortestPathToView found no reachable target")
-    return null
 }

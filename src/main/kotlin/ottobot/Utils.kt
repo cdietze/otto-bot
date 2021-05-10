@@ -65,34 +65,6 @@ fun moveTo(vec: Vec): Command {
     }
 }
 
-fun moveTo(vec: Vec, myDir: Dir): Command {
-    println(
-        "moveTo, pos=$vec, myDir=$myDir, pos.alignToNorth(myDir)=${vec.alignToNorth(myDir)}, result=${
-        moveTo(
-            vec.alignToNorth(
-                myDir
-            )
-        )
-        }"
-    )
-    return moveTo(vec.alignFromNorth(myDir))
-}
-
-fun moveCloseTo(dim: Dim, vec: Vec): Command {
-    val radiusX = dim.width / 2
-    val radiusY = dim.height / 2
-    return when {
-        vec.y < -radiusY -> FORWARD
-        vec.y > radiusY -> BACKWARD
-        vec.x < 0 -> LEFT
-        else -> RIGHT
-    }
-}
-
-fun moveCloseTo(dim: Dim, vec: Vec, myDir: Dir): Command {
-    return moveCloseTo(dim, vec.alignFromNorth(myDir))
-}
-
 fun BotMap.dim(): Dim = Dim(this[0].length, this.size)
 
 // We just assume the view is a square
