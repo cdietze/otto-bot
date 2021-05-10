@@ -115,7 +115,9 @@ fun BotMap.playerSymbol(): Char {
 }
 
 interface BreadthFirstResult {
-    fun path(target: Vec): List<Node>?
+    fun path(target: Vec): List<Node>? = node(target)?.let { path(it) }
+    fun path(target: Node): List<Node>?
+    fun node(target: Vec): Node?
 }
 
 data class Node(val pos: Vec, val dir: Dir)
@@ -168,11 +170,11 @@ fun breadthFirst(pos: Vec, dir: Dir, obstacles: Set<Vec>, viewRadius: Int, maxCo
         frontier = nextFrontier
     }
 
-    fun Node.path(): List<Node> {
+    fun Node.path(): List<Node>? {
         val result = mutableListOf<Node>(this)
         var n = this
         while (true) {
-            val n2 = cameFrom[n] ?: error("")
+            val n2 = cameFrom[n] ?: return null
             if (n == n2) return result
             n = n2
             result.add(n2)
@@ -186,9 +188,7 @@ fun breadthFirst(pos: Vec, dir: Dir, obstacles: Set<Vec>, viewRadius: Int, maxCo
     }
 
     return object : BreadthFirstResult {
-        override fun path(target: Vec): List<Node>? {
-            val n = targetToNode(target)
-            return n?.path()
-        }
+        override fun node(target: Vec): Node? = targetToNode(target)
+        override fun path(target: Node): List<Node>? = target.path()
     }
 }

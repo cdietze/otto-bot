@@ -25,6 +25,7 @@ import ottobot.toVec
 import ottobot.viewRadius
 import ottobot.zipWithVec
 import java.util.Random
+import kotlin.math.pow
 
 /**
  * Solution for the word mission
@@ -88,7 +89,6 @@ fun tryToExposeWord(ctx: StateContext, next: State): Pair<Command, State>? {
 fun tryExploreAnyTarget(ctx: StateContext, targets: Set<Vec>): Command? {
     val pathResult = breadthFirst(ctx.pos, ctx.dir, ctx.knownMap.obstacles(), ctx.view.viewRadius())
     val unexploredTargets = targets.filter { !ctx.knownMap.containsKey(it) }
-    println("unexploredTargets=$unexploredTargets")
     val bestPath: List<Node>? = unexploredTargets.map { t -> Pair(t, pathResult.path(t)) }.minByOrNull { p ->
         p.second?.size ?: Int.MAX_VALUE
     }?.second
@@ -99,12 +99,20 @@ fun tryExplore(ctx: StateContext): Command? {
     val pathResult = breadthFirst(ctx.pos, ctx.dir, ctx.knownMap.obstacles(), ctx.view.viewRadius())
     val targets: Set<Vec> =
         ctx.knownMap.keys.flatMap { it.neighbors() }.filter { !ctx.knownMap.containsKey(it) }.toSet()
-    val bestPath = targets.map { t ->
-        Pair(t, pathResult.path(t))
-    }.minByOrNull { p ->
-        p.second?.size?.let { moves -> moves + p.first.manhattanDistance() * 0.3f } ?: Float.MAX_VALUE
-    }?.second
-    return bestPath?.firstCommand()
+    val nodeMap: Map<Node, List<Vec>> = targets.groupBy { pathResult.node(it) }.filterNotNull()
+
+    data class Candidate(val n: Node, val vs: List<Vec>, val path: List<Node>)
+
+    fun Candidate.score(): Float {
+        val exploreCount = vs.size.toFloat()
+        val moveCount = (path.size - 1).toFloat()
+        val dist = vs.sumOf { it.manhattanDistance() }.toFloat() / exploreCount
+        return exploreCount / moveCount.pow(0.5f) / (dist.pow(2f) * 0.2f)
+    }
+
+    val candidates = nodeMap.entries.map { e -> Candidate(e.key, e.value, pathResult.path(e.key)!!) }
+    val best = candidates.maxByOrNull { it.score() }
+    return best?.path?.firstCommand()
 }
 
 fun List<Node>.firstCommand(): Command {
@@ -158,3 +166,6 @@ fun randomCommand(): Command = when (random.nextInt(4)) {
     2 -> '^'
     else -> 'v'
 }
+
+fun <K, V> Map<out K?, V?>.filterNotNull(): Map<K, V> =
+    filter { it.key != null && it.value != null } as Map<K, V>
