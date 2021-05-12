@@ -122,7 +122,8 @@ interface BreadthFirstResult {
 
 data class Node(val pos: Vec, val dir: Dir)
 
-private inline fun canSee(n: Node, v: Vec, viewRadius: Int): Boolean = (v - n.pos).manhattanDistance() <= viewRadius
+private inline fun canSee(n: Node, v: Vec, viewRadius: Int): Boolean =
+    abs(v.x - n.pos.x) <= viewRadius && abs(v.y - n.pos.y) <= viewRadius
 
 fun Node.neighbors(): List<Node> = listOf(
     this.copy(dir = dir.left()),
